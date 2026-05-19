@@ -66,6 +66,12 @@ def test_sanitize_responses_payload_removes_user_field():
     }
 
 
+def test_sanitize_responses_payload_reuses_payload_without_user_field():
+    payload = {"model": "gpt-5.5", "stream": True}
+
+    assert sanitize_responses_payload(payload) is payload
+
+
 def test_build_backend_target_url_appends_path_to_backend_root():
     assert (
         build_backend_target_url("http://127.0.0.1:8327/v1/", "responses")

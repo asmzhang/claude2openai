@@ -34,6 +34,7 @@ claude -p --model gpt-5.5 "在吗" --output-format json
 - `bootstrap_claude_gateway.py`：一条命令拉起 fixup + gateway + smoke 的 Python 主入口
 - `claude2openai.ps1`：对 `bootstrap_claude_gateway.py` 的薄 PowerShell 包装
 - `run_smoke.ps1`：验证直连后端、Anthropic gateway 和 Claude Code
+- `run_bench.ps1`：对比直连后端、fixup 和 Anthropic gateway 的延迟
 - `litellm_config.yaml`：LiteLLM 模型映射配置
 - `src/claude2openai_gateway/bootstrap.py`：后台进程启停与生命周期管理
 - `src/claude2openai_gateway/smoke.py`：烟测辅助逻辑与 CLI
@@ -194,6 +195,29 @@ Set-Location D:\4\claude2openai
 uv run pytest tests/test_smoke.py -q
 uv run pytest tests/test_fixup.py -q
 .\run_smoke.ps1 -GatewayKey "local-gateway-key"
+```
+
+## 运行 benchmark
+
+如果你要量化 `8327`、`8328` 和 `4000` 三条链路的延迟差，可以直接跑：
+
+```powershell
+$env:OPENAI_API_KEY = "your-key"
+Set-Location D:\4\claude2openai
+.\run_bench.ps1 -GatewayKey "local-gateway-key" -Repeats 5 -Warmup 1
+```
+
+如果本地直连后端用的是仓库里的代理 key，也可以显式传：
+
+```powershell
+.\run_bench.ps1 -BackendKey "proxy-key" -GatewayKey "local-gateway-key"
+```
+
+底层等价命令是：
+
+```powershell
+$env:PYTHONPATH = "src"
+uv run python -m claude2openai_gateway.smoke bench --backend-api-key "your-key" --gateway-api-key "local-gateway-key" --model gpt-5.5
 ```
 
 ## Claude Code 环境变量

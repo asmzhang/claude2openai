@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 import json
 from typing import Any
 
@@ -22,18 +23,18 @@ def resolve_backend_authorization(
 
 
 def sanitize_responses_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if "user" not in payload:
+        return payload
     return {key: value for key, value in payload.items() if key != "user"}
 
 
-def _parse_sse_events(sse_body: str) -> list[dict[str, Any]]:
-    events: list[dict[str, Any]] = []
-    for chunk in sse_body.strip().split("\n\n"):
+def _parse_sse_events(sse_body: str) -> Iterator[dict[str, Any]]:
+    for chunk in sse_body.split("\n\n"):
         lines = [line for line in chunk.splitlines() if line.strip()]
         data_lines = [line[5:].strip() for line in lines if line.startswith("data:")]
         if not data_lines:
             continue
-        events.append(json.loads("\n".join(data_lines)))
-    return events
+        yield json.loads("\n".join(data_lines))
 
 
 def build_responses_json_from_sse(sse_body: str) -> dict[str, Any]:
