@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -461,6 +462,101 @@ def test_root_bootstrap_script_forwards_status_subcommand():
     assert result.returncode == 0
     assert "fixup: state=" in result.stdout
     assert "gateway: state=" in result.stdout
+
+
+def _invoke_claude2openai_ps1(tmp_path: Path, *script_args: str) -> tuple[subprocess.CompletedProcess[str], Path]:
+    repo_root = Path(__file__).resolve().parents[1]
+    bin_dir = tmp_path / "bin"
+    capture_path = tmp_path / "uv-args.txt"
+    bin_dir.mkdir()
+    (bin_dir / "uv.cmd").write_text(
+        "@echo off\r\n"
+        ">\"%UV_CAPTURE%\" echo %*\r\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir};{env['PATH']}"
+    env["UV_CAPTURE"] = str(capture_path)
+
+    result = subprocess.run(
+        [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(repo_root / "claude2openai.ps1"),
+            *script_args,
+        ],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    return result, capture_path
+
+
+def _run_claude2openai_ps1(tmp_path: Path, *script_args: str) -> str:
+    result, capture_path = _invoke_claude2openai_ps1(tmp_path, *script_args)
+
+    assert result.returncode == 0, result.stderr
+    return capture_path.read_text(encoding="utf-8").strip()
+
+
+def test_claude2openai_script_maps_on_to_start(tmp_path: Path):
+    forwarded = _run_claude2openai_ps1(tmp_path, "on")
+
+    assert forwarded.endswith(" start")
+    assert "bootstrap_claude_gateway.py" in forwarded
+
+
+def test_claude2openai_script_maps_off_to_stop(tmp_path: Path):
+    forwarded = _run_claude2openai_ps1(tmp_path, "off")
+
+    assert forwarded.endswith(" stop")
+    assert "bootstrap_claude_gateway.py" in forwarded
+
+
+@pytest.mark.parametrize("legacy_command", ["start", "stop"])
+def test_claude2openai_script_rejects_legacy_start_stop_commands(tmp_path: Path, legacy_command: str):
+    result, capture_path = _invoke_claude2openai_ps1(tmp_path, legacy_command)
+
+    assert result.returncode != 0
+    assert "Use 'on'/'off'" in result.stderr
+    assert capture_path.exists() is False
+
+
+def test_claude2openai_cmd_shim_forwards_on_to_start(tmp_path: Path):
+    repo_root = Path(__file__).resolve().parents[1]
+    shim_path = repo_root / "claude2openai.cmd"
+
+    assert shim_path.exists()
+
+    bin_dir = tmp_path / "bin"
+    capture_path = tmp_path / "uv-args.txt"
+    bin_dir.mkdir()
+    (bin_dir / "uv.cmd").write_text(
+        "@echo off\r\n"
+        ">\"%UV_CAPTURE%\" echo %*\r\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir};{env['PATH']}"
+    env["UV_CAPTURE"] = str(capture_path)
+
+    result = subprocess.run(
+        ["cmd", "/c", str(shim_path), "on"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert capture_path.read_text(encoding="utf-8").strip().endswith(" start")
 
 
 def test_process_exists_uses_tasklist_output_on_windows(monkeypatch: pytest.MonkeyPatch):

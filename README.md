@@ -77,9 +77,12 @@ uv run python .\bootstrap_claude_gateway.py start
 如果你只是更习惯 PowerShell，也可以用包装脚本：
 
 ```powershell
-Set-Location D:\4\claude2openai
-.\claude2openai.ps1 start
+claude2openai on
 ```
+
+将 `D:\4\claude2openai` 加入 Windows 用户 `Path` 后，可以在任意终端直接使用 `claude2openai`。
+
+`claude2openai` 的启停命令使用 `on/off`；`status` 和 `restart` 保持不变，旧的 `start/stop` 不再接受。
 
 常用生命周期命令：
 
@@ -93,12 +96,12 @@ uv run python .\bootstrap_claude_gateway.py stop
 对应的 PowerShell 包装命令：
 
 ```powershell
-.\claude2openai.ps1 status
-.\claude2openai.ps1 restart --skip-smoke
-.\claude2openai.ps1 stop
+claude2openai status
+claude2openai restart --skip-smoke
+claude2openai off
 ```
 
-重复执行 `start` 是安全的：
+重复执行 `on` 是安全的：
 
 - 如果两个托管服务都已健康运行，会直接复用
 - 如果 `pid` 文件已经失效，会自动清理后重启
@@ -111,7 +114,7 @@ uv run python .\bootstrap_claude_gateway.py stop
 默认会转发到：
 
 ```powershell
-.\claude2openai.ps1 start --skip-smoke
+claude2openai on --skip-smoke
 ```
 
 只有显式传入 `-LegacyForeground`，才会回到旧的前台调试模式。
@@ -238,7 +241,7 @@ uv run python .\bootstrap_claude_gateway.py start
 或者：
 
 ```powershell
-.\claude2openai.ps1 start
+claude2openai on
 ```
 
 这会替代旧的“两窗口常驻”方式。
@@ -254,9 +257,9 @@ uv run python .\bootstrap_claude_gateway.py stop
 包装脚本对应命令：
 
 ```powershell
-.\claude2openai.ps1 status
-.\claude2openai.ps1 restart
-.\claude2openai.ps1 stop
+claude2openai status
+claude2openai restart
+claude2openai off
 ```
 
 如果 `status` 显示 `conflict`，说明 `4000` 或 `8328` 被其他进程占用，管理器不会直接帮你强杀未知进程。
