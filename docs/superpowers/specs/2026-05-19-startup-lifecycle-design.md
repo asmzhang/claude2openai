@@ -35,7 +35,7 @@ Lifecycle operations stay conservative. `stop` and `restart` only terminate proc
 
 - `bootstrap_claude_gateway.py`: root CLI entry point with lifecycle subcommands
 - `src/claude2openai_gateway/bootstrap.py`: service inspection, lifecycle management, and CLI behavior
-- `manage_gateway.ps1`: thin PowerShell wrapper for the Python entry point
+- `claude2openai.ps1`: thin PowerShell wrapper for the Python entry point
 - `tests/test_bootstrap.py`: regression coverage for CLI normalization, state classification, and repeat-start behavior
 - `README.md`: updated single-entry usage and troubleshooting guidance
 
@@ -45,7 +45,7 @@ Lifecycle operations stay conservative. `stop` and `restart` only terminate proc
 2. Running the same command again does not spawn duplicates or require extra terminals
 3. `uv run python .\bootstrap_claude_gateway.py status` clearly reports whether each service is running, stale, stopped, starting, or in conflict
 4. `uv run python .\bootstrap_claude_gateway.py stop` shuts down only managed services and cleans up stale pid files
-5. `manage_gateway.ps1` provides the same lifecycle commands without requiring the user to remember the Python invocation
+5. `claude2openai.ps1` provides the same lifecycle commands without requiring the user to remember the Python invocation
 
 ## Risks
 

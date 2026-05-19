@@ -9,8 +9,8 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 if (-not $LegacyForeground) {
-    Write-Warning "start_fixup.ps1 is now a legacy debug entry point. Delegating to .\\manage_gateway.ps1 start --skip-smoke. Use -LegacyForeground to run fixup only in the foreground."
-    & (Join-Path $root "manage_gateway.ps1") start --skip-smoke
+    Write-Warning "start_fixup.ps1 is now a legacy debug entry point. Delegating to .\\claude2openai.ps1 start --skip-smoke. Use -LegacyForeground to run fixup only in the foreground."
+    & (Join-Path $root "claude2openai.ps1") start --skip-smoke
     exit $LASTEXITCODE
 }
 

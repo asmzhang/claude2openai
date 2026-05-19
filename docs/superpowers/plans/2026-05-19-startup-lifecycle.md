@@ -34,7 +34,7 @@
 ### Task 3: Add the single PowerShell wrapper
 
 **Files:**
-- Create: `manage_gateway.ps1`
+- Create: `claude2openai.ps1`
 - Modify: `README.md`
 
 - [ ] **Step 1: Add a thin wrapper that forwards lifecycle arguments to `bootstrap_claude_gateway.py`, defaulting to `start`**

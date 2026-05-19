@@ -32,7 +32,7 @@ claude -p --model gpt-5.5 "在吗" --output-format json
 - `start_fixup.ps1`：仅用于调试的旧前台 fixup 启动脚本
 - `start_gateway.ps1`：仅用于调试的旧前台 gateway 启动脚本
 - `bootstrap_claude_gateway.py`：一条命令拉起 fixup + gateway + smoke 的 Python 主入口
-- `manage_gateway.ps1`：对 `bootstrap_claude_gateway.py` 的薄 PowerShell 包装
+- `claude2openai.ps1`：对 `bootstrap_claude_gateway.py` 的薄 PowerShell 包装
 - `run_smoke.ps1`：验证直连后端、Anthropic gateway 和 Claude Code
 - `litellm_config.yaml`：LiteLLM 模型映射配置
 - `src/claude2openai_gateway/bootstrap.py`：后台进程启停与生命周期管理
@@ -78,7 +78,7 @@ uv run python .\bootstrap_claude_gateway.py start
 
 ```powershell
 Set-Location D:\4\claude2openai
-.\manage_gateway.ps1 start
+.\claude2openai.ps1 start
 ```
 
 常用生命周期命令：
@@ -93,9 +93,9 @@ uv run python .\bootstrap_claude_gateway.py stop
 对应的 PowerShell 包装命令：
 
 ```powershell
-.\manage_gateway.ps1 status
-.\manage_gateway.ps1 restart --skip-smoke
-.\manage_gateway.ps1 stop
+.\claude2openai.ps1 status
+.\claude2openai.ps1 restart --skip-smoke
+.\claude2openai.ps1 stop
 ```
 
 重复执行 `start` 是安全的：
@@ -111,7 +111,7 @@ uv run python .\bootstrap_claude_gateway.py stop
 默认会转发到：
 
 ```powershell
-.\manage_gateway.ps1 start --skip-smoke
+.\claude2openai.ps1 start --skip-smoke
 ```
 
 只有显式传入 `-LegacyForeground`，才会回到旧的前台调试模式。
@@ -238,7 +238,7 @@ uv run python .\bootstrap_claude_gateway.py start
 或者：
 
 ```powershell
-.\manage_gateway.ps1 start
+.\claude2openai.ps1 start
 ```
 
 这会替代旧的“两窗口常驻”方式。
@@ -254,9 +254,9 @@ uv run python .\bootstrap_claude_gateway.py stop
 包装脚本对应命令：
 
 ```powershell
-.\manage_gateway.ps1 status
-.\manage_gateway.ps1 restart
-.\manage_gateway.ps1 stop
+.\claude2openai.ps1 status
+.\claude2openai.ps1 restart
+.\claude2openai.ps1 stop
 ```
 
 如果 `status` 显示 `conflict`，说明 `4000` 或 `8328` 被其他进程占用，管理器不会直接帮你强杀未知进程。
