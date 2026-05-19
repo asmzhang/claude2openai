@@ -31,7 +31,7 @@ claude -p --model gpt-5.5 "在吗" --output-format json
 
 - `start_fixup.ps1`：仅用于调试的旧前台 fixup 启动脚本
 - `start_gateway.ps1`：仅用于调试的旧前台 gateway 启动脚本
-- `bootstrap_claude_gateway.py`：一条命令拉起 fixup + gateway + smoke 的 Python 主入口
+- `bootstrap_claude_gateway.py`：一条命令拉起 fixup + gateway，必要时附带 smoke 的 Python 主入口
 - `claude2openai.ps1`：对 `bootstrap_claude_gateway.py` 的薄 PowerShell 包装
 - `run_smoke.ps1`：验证直连后端、Anthropic gateway 和 Claude Code
 - `run_bench.ps1`：对比直连后端、fixup 和 Anthropic gateway 的延迟
@@ -71,9 +71,11 @@ uv run python .\bootstrap_claude_gateway.py start
 
 - 启动或复用 `8328` 上的 fixup proxy
 - 启动或复用 `4000` 上的 LiteLLM gateway
-- 默认执行 smoke check，除非传入 `--skip-smoke`
+- 默认不执行 smoke check
+- 传入 `--smoke` 时执行启动后 smoke check
 - 默认打印精简摘要
-- 传入 `--verbose` 时打印 smoke 详情和 Claude / CC Switch 环境变量块
+- 传入 `--verbose` 时打印 Claude / CC Switch 环境变量块
+- 同时传入 `--verbose --smoke` 时打印 smoke 详情
 
 如果你只是更习惯 PowerShell，也可以用包装脚本：
 
@@ -90,7 +92,7 @@ claude2openai on
 ```powershell
 uv run python .\bootstrap_claude_gateway.py status
 uv run python .\bootstrap_claude_gateway.py start --verbose
-uv run python .\bootstrap_claude_gateway.py restart --skip-smoke
+uv run python .\bootstrap_claude_gateway.py restart --smoke
 uv run python .\bootstrap_claude_gateway.py stop
 ```
 
@@ -98,7 +100,7 @@ uv run python .\bootstrap_claude_gateway.py stop
 
 ```powershell
 claude2openai status
-claude2openai restart --skip-smoke
+claude2openai restart --smoke
 claude2openai off
 ```
 
@@ -115,7 +117,7 @@ claude2openai off
 默认会转发到：
 
 ```powershell
-claude2openai on --skip-smoke
+claude2openai on
 ```
 
 只有显式传入 `-LegacyForeground`，才会回到旧的前台调试模式。

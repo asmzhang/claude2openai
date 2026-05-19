@@ -266,7 +266,10 @@ def _add_start_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--gateway-model")
     parser.add_argument("--openai-model")
     parser.add_argument("--gateway-key")
-    parser.add_argument("--skip-smoke", action="store_true")
+    smoke_group = parser.add_mutually_exclusive_group()
+    smoke_group.add_argument("--smoke", dest="run_smoke", action="store_true")
+    smoke_group.add_argument("--skip-smoke", dest="run_smoke", action="store_false", help=argparse.SUPPRESS)
+    parser.set_defaults(run_smoke=False)
     parser.add_argument("--verbose", action="store_true")
 
 
@@ -540,7 +543,7 @@ def main(argv: list[str] | None = None) -> int:
         or _config_str(repo_config, "gateway", "key")
         or DEFAULT_GATEWAY_KEY
     )
-    skip_smoke = getattr(args, "skip_smoke", False)
+    run_smoke = getattr(args, "run_smoke", False)
     verbose = getattr(args, "verbose", False)
     openai_api_key_arg = getattr(args, "openai_api_key", None)
     fixup_port = args.fixup_port or _config_int(repo_config, "ports", "fixup") or DEFAULT_FIXUP_PORT
@@ -597,7 +600,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(str(exc)) from exc
 
     smoke_results: dict[str, Any] | None = None
-    if not skip_smoke:
+    if run_smoke:
         try:
             smoke_results = {
                 "fixup": run_backend_smoke(

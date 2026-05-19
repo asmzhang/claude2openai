@@ -194,7 +194,7 @@ gateway = 5000
     monkeypatch.setattr(bootstrap, "ensure_service_started", fake_ensure_service_started)
     monkeypatch.setattr(bootstrap, "_print_ready_summary", lambda *args, **kwargs: None)
 
-    exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path), "--skip-smoke"])
+    exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path)])
 
     assert exit_code == 0
     assert len(captured_specs) == 2
@@ -226,7 +226,7 @@ api_key = "proxy-key"
     monkeypatch.setattr(bootstrap, "ensure_service_started", raise_timeout)
 
     with pytest.raises(SystemExit, match="Timed out waiting for startup"):
-        bootstrap.main(["start", "--repo-root", str(tmp_path), "--skip-smoke"])
+        bootstrap.main(["start", "--repo-root", str(tmp_path)])
 
 
 def test_main_stop_converts_timeout_to_clean_cli_error(
@@ -275,12 +275,12 @@ api_key = "proxy-key"
     monkeypatch.setattr(
         bootstrap,
         "run_backend_smoke",
-        lambda **kwargs: {"target": "backend", "returned_model": "gpt-5.4"},
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("default start should not run backend smoke")),
     )
     monkeypatch.setattr(
         bootstrap,
         "run_gateway_smoke",
-        lambda **kwargs: {"target": "gateway", "returned_model": "gpt-5.5"},
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("default start should not run gateway smoke")),
     )
 
     exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path)])
@@ -296,7 +296,58 @@ api_key = "proxy-key"
     assert "log=" not in output
 
 
-def test_main_start_verbose_output_includes_smoke_and_env(
+def test_main_start_verbose_output_includes_env_without_smoke(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    (tmp_path / "gateway_config.toml").write_text(
+        """
+[backend]
+api_key = "proxy-key"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    def fake_ensure_service_started(spec: LaunchSpec, timeout_seconds: float):
+        return bootstrap.StartResult(
+            action="started",
+            status=bootstrap.ServiceStatus(
+                name=spec.name,
+                port=spec.port,
+                pid=123 if spec.name == "fixup" else 456,
+                pid_file_exists=True,
+                process_running=True,
+                port_open=True,
+                state="running",
+                log_path=spec.log_path,
+                pid_path=spec.pid_path,
+            ),
+        )
+
+    monkeypatch.setattr(bootstrap, "ensure_service_started", fake_ensure_service_started)
+    monkeypatch.setattr(
+        bootstrap,
+        "run_backend_smoke",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("verbose alone should not run backend smoke")),
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        "run_gateway_smoke",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("verbose alone should not run gateway smoke")),
+    )
+
+    exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path), "--verbose"])
+
+    assert exit_code == 0
+    output = capsys.readouterr().out
+    assert "== Fixup smoke ==" not in output
+    assert "== Gateway smoke ==" not in output
+    assert "== CC Switch env ==" in output
+    assert "ANTHROPIC_AUTH_TOKEN" in output
+
+
+def test_main_start_smoke_verbose_output_includes_smoke_and_env(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -337,7 +388,7 @@ api_key = "proxy-key"
         lambda **kwargs: {"target": "gateway", "returned_model": "gpt-5.5"},
     )
 
-    exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path), "--verbose"])
+    exit_code = bootstrap.main(["start", "--repo-root", str(tmp_path), "--verbose", "--smoke"])
 
     assert exit_code == 0
     output = capsys.readouterr().out
@@ -361,6 +412,7 @@ def _make_launch_spec(tmp_path: Path, name: str = "gateway", port: int = 4000) -
 
 def test_normalize_cli_argv_defaults_to_start_command():
     assert normalize_cli_argv([]) == ["start"]
+    assert normalize_cli_argv(["--smoke"]) == ["start", "--smoke"]
     assert normalize_cli_argv(["--skip-smoke"]) == ["start", "--skip-smoke"]
     assert normalize_cli_argv(["status"]) == ["status"]
 
