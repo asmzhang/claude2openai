@@ -1,5 +1,9 @@
 model_list:
   - model_name: os.environ/GATEWAY_MODEL
+    model_info:
+      max_input_tokens: 258000
+      max_output_tokens: 128000
+      max_tokens: 128000
     litellm_params:
       model: os.environ/OPENAI_MODEL
       api_base: os.environ/OPENAI_API_BASE
